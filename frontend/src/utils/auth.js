@@ -55,26 +55,26 @@ export const validateEmail = (email) => {
  */
 export const validatePassword = (password) => {
   if (password.length < 8) {
-    return { isValid: false, message: 'Mật khẩu phải có ít nhất 8 ký tự' };
+    return { isValid: false, message: 'Password must be at least 8 characters long' };
   }
   
   if (!/[A-Z]/.test(password)) {
-    return { isValid: false, message: 'Mật khẩu phải có ít nhất 1 chữ hoa' };
+    return { isValid: false, message: 'Password must contain at least 1 uppercase letter' };
   }
   
   if (!/[a-z]/.test(password)) {
-    return { isValid: false, message: 'Mật khẩu phải có ít nhất 1 chữ thường' };
+    return { isValid: false, message: 'Password must contain at least 1 lowercase letter' };
   }
   
   if (!/[0-9]/.test(password)) {
-    return { isValid: false, message: 'Mật khẩu phải có ít nhất 1 số' };
+    return { isValid: false, message: 'Password must contain at least 1 number' };
   }
   
   if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-    return { isValid: false, message: 'Mật khẩu phải có ít nhất 1 ký tự đặc biệt' };
+    return { isValid: false, message: 'Password must contain at least 1 special character' };
   }
   
-  return { isValid: true, message: 'Mật khẩu mạnh' };
+  return { isValid: true, message: 'Strong password' };
 };
 
 /**
@@ -186,4 +186,31 @@ export const resetLoginAttempts = (email) => {
   const attempts = JSON.parse(localStorage.getItem(LOGIN_ATTEMPTS_KEY) || '{}');
   delete attempts[email];
   localStorage.setItem(LOGIN_ATTEMPTS_KEY, JSON.stringify(attempts));
+};
+
+/**
+ * Get authentication token from localStorage
+ * Returns the token string or null if not found
+ */
+export const getAuthToken = () => {
+  return localStorage.getItem('vt-auth-token');
+};
+
+/**
+ * Set authentication token in localStorage
+ */
+export const setAuthToken = (token) => {
+  if (token) {
+    localStorage.setItem('vt-auth-token', token);
+  } else {
+    localStorage.removeItem('vt-auth-token');
+  }
+};
+
+/**
+ * Remove authentication token and user data from localStorage
+ */
+export const clearAuthData = () => {
+  localStorage.removeItem('vt-auth-token');
+  localStorage.removeItem('vt-auth-user');
 };

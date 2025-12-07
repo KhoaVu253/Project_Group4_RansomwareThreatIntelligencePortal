@@ -1,5 +1,6 @@
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     Column,
     DateTime,
     Enum,
@@ -29,6 +30,14 @@ class User(Base):
     role = Column(Enum("admin", "analyst", "viewer", name="user_role"), default="analyst")
     is_active = Column(SmallInteger, nullable=False, default=1)
     last_login_at = Column(DateTime)
+    # Email verification fields - commented out as they don't exist in database
+    # email_verified = Column(Boolean, nullable=False, default=False)
+    # email_verification_token = Column(String(255), nullable=True)
+    # email_verification_sent_at = Column(DateTime, nullable=True)
+    # Two-Factor Authentication fields
+    two_factor_enabled = Column(Boolean, nullable=False, default=False)
+    two_factor_secret = Column(String(32), nullable=True)
+    two_factor_backup_codes = Column(JSON, nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(
         DateTime,
@@ -36,9 +45,24 @@ class User(Base):
         server_default=func.now(),
         onupdate=func.now(),
     )
+    failed_login_attempts = Column(Integer, nullable=False, default=0)
+    locked_until = Column(DateTime)
 
     profile = relationship("UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
     scans = relationship("ScanRequest", back_populates="user")
+
+
+class EmailOtp(Base):
+    __tablename__ = "email_otps"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    email = Column(String(191), nullable=False, unique=True)
+    full_name = Column(String(191))
+    password_hash = Column(String(255), nullable=False)
+    otp_code = Column(String(6), nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    purpose = Column(String(32), nullable=False, default="register")
 
 
 class UserProfile(Base):
@@ -162,4 +186,58 @@ class AnalystComment(Base):
 
     scan = relationship("ScanRequest", back_populates="comments")
 
+
+class CommunityCategory(Base):
+    __tablename__ = "community_categories"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    slug = Column(String(128), nullable=False, unique=True)
+    name = Column(String(191), nullable=False)
+    description = Column(Text)
+    display_order = Column(Integer, default=0)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    updated_at = Column(
+        DateTime,
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+
+class CommunityPost(Base):
+    __tablename__ = "community_posts"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    user_id = Column(BigInteger, ForeignKey("users.id", ondelete="SET NULL"))
+    author_email = Column(String(191), nullable=False)
+    author_name = Column(String(191))
+    title = Column(String(255), nullable=False)
+    summary = Column(String(512))
+    content = Column(Text, nullable=False)
+    category = Column(String(64))
+    tags = Column(JSON)
+    status = Column(Enum("draft", "published", "archived", name="community_post_status"), nullable=False, default="published")
+    is_featured = Column(SmallInteger, default=0, nullable=False)
+    views = Column(Integer, nullable=False, default=0)
+    comments_count = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    updated_at = Column(
+        DateTime,
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+
+class CommunityComment(Base):
+    __tablename__ = "community_comments"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    post_id = Column(BigInteger, ForeignKey("community_posts.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(BigInteger, ForeignKey("users.id", ondelete="SET NULL"))
+    author_email = Column(String(191), nullable=False)
+    author_name = Column(String(191))
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
 

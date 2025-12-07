@@ -131,3 +131,31 @@ def sanitize_filename(filename: str, max_length: int = 255) -> str:
         filename = name[:max_length - len(ext) - 1] + '.' + ext if ext else name[:max_length]
     
     return filename
+
+
+def validate_password_strength(password: str) -> Tuple[bool, Optional[str]]:
+    """
+    Validate password strength
+    Returns: (is_valid, error_message)
+    """
+    if len(password) < 8:
+        return False, "Mật khẩu phải có ít nhất 8 ký tự"
+    
+    if not re.search(r'[A-Z]', password):
+        return False, "Mật khẩu phải có ít nhất 1 chữ hoa"
+    
+    if not re.search(r'[a-z]', password):
+        return False, "Mật khẩu phải có ít nhất 1 chữ thường"
+    
+    if not re.search(r'[0-9]', password):
+        return False, "Mật khẩu phải có ít nhất 1 chữ số"
+    
+    if not re.search(r'[!@#$%^&*(),.?":{}|<>_+\-=\[\]\\\';\/]', password):
+        return False, "Mật khẩu phải có ít nhất 1 ký tự đặc biệt"
+    
+    # Check common passwords
+    common_passwords = ['password', '12345678', 'qwerty123', 'admin123', 'welcome123']
+    if password.lower() in common_passwords:
+        return False, "Mật khẩu quá phổ biến"
+    
+    return True, None

@@ -30,7 +30,7 @@ const statusMappings = {
   error: { variant: 'danger', text: 'Scan failed' },
 };
 
-const ScanPage = ({ response, error, isLoading, activeQuery, analysisStatus, progressPercent, onBack, onRetry }) => {
+const ScanPage = ({ response, error, isLoading, activeQuery, analysisStatus, progressPercent, onBack, onRetry, backendBaseUrl }) => {
   const hasQuery = Boolean(activeQuery?.indicator || activeQuery?.display);
   const primaryLabel = activeQuery?.display || activeQuery?.indicator;
   const secondaryLabel =
@@ -159,7 +159,15 @@ const ScanPage = ({ response, error, isLoading, activeQuery, analysisStatus, pro
         </Alert>
       )}
 
-      {hasQuery && <AnalysisResult response={response} error={error} isLoading={isLoading} />}
+      {hasQuery && (
+        <AnalysisResult 
+          response={response} 
+          error={error} 
+          isLoading={isLoading}
+          activeQuery={activeQuery}
+          backendBaseUrl={backendBaseUrl}
+        />
+      )}
     </Container>
   );
 };

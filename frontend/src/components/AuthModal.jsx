@@ -15,10 +15,10 @@ const AuthModal = ({ show, mode, onClose, onSwitchMode }) => {
 
   const isRegister = mode === 'register';
 
-  const title = isRegister ? 'Tạo tài khoản bảo mật' : 'Đăng nhập vào bảng điều khiển';
+  const title = isRegister ? 'Create Secure Account' : 'Log in to Dashboard';
   const description = isRegister
-    ? 'Khởi tạo tài khoản để đồng bộ lịch sử phân tích, quản lý team và nhận cảnh báo ransomware mới nhất.'
-    : 'Truy cập bảng điều khiển phân tích của bạn để tiếp tục theo dõi các mối đe doạ.';
+    ? 'Create an account to sync analysis history, manage your team, and receive the latest ransomware alerts.'
+    : 'Access your analysis dashboard to continue monitoring threats.';
 
   const isValid = useMemo(() => {
     if (!formValues.email || !formValues.password) return false;
@@ -64,14 +64,14 @@ const AuthModal = ({ show, mode, onClose, onSwitchMode }) => {
       <Form onSubmit={handleSubmit} className="auth-form">
         {isRegister && (
           <Form.Group className="mb-3" controlId="authFullName">
-            <Form.Label>Họ và tên</Form.Label>
+            <Form.Label>Full Name</Form.Label>
             <InputGroup>
               <InputGroup.Text>
                 <Person size={18} />
               </InputGroup.Text>
               <Form.Control
                 type="text"
-                placeholder="Nguyễn Văn A"
+                placeholder="John Doe"
                 value={formValues.fullName}
                 onChange={handleChange('fullName')}
                 required={isRegister}
@@ -99,14 +99,14 @@ const AuthModal = ({ show, mode, onClose, onSwitchMode }) => {
         </Form.Group>
 
         <Form.Group className="mb-3" controlId="authPassword">
-          <Form.Label>Mật khẩu</Form.Label>
+          <Form.Label>Password</Form.Label>
           <InputGroup>
             <InputGroup.Text>
               <Lock size={18} />
             </InputGroup.Text>
             <Form.Control
               type="password"
-              placeholder="Nhập mật khẩu"
+              placeholder="Enter password"
               value={formValues.password}
               onChange={handleChange('password')}
               required
@@ -117,14 +117,14 @@ const AuthModal = ({ show, mode, onClose, onSwitchMode }) => {
 
         {isRegister && (
           <Form.Group className="mb-3" controlId="authConfirmPassword">
-            <Form.Label>Nhập lại mật khẩu</Form.Label>
+            <Form.Label>Confirm Password</Form.Label>
             <InputGroup>
               <InputGroup.Text>
                 <Lock size={18} />
               </InputGroup.Text>
               <Form.Control
                 type="password"
-                placeholder="Nhập lại mật khẩu"
+                placeholder="Confirm password"
                 value={formValues.confirmPassword}
                 onChange={handleChange('confirmPassword')}
                 required={isRegister}
@@ -132,7 +132,7 @@ const AuthModal = ({ show, mode, onClose, onSwitchMode }) => {
               />
             </InputGroup>
             {formValues.confirmPassword && formValues.confirmPassword !== formValues.password && (
-              <small className="text-danger d-block mt-2">Mật khẩu nhập lại chưa khớp.</small>
+              <small className="text-danger d-block mt-2">Passwords do not match.</small>
             )}
           </Form.Group>
         )}
@@ -141,7 +141,7 @@ const AuthModal = ({ show, mode, onClose, onSwitchMode }) => {
           <Form.Group className="mb-3" controlId="authPolicy">
             <Form.Check
               type="checkbox"
-              label="Tôi đồng ý với Điều khoản dịch vụ và Chính sách bảo mật."
+              label="I agree to the Terms of Service and Privacy Policy."
               checked={acceptedPolicy}
               onChange={(event) => setAcceptedPolicy(event.target.checked)}
             />
@@ -149,29 +149,29 @@ const AuthModal = ({ show, mode, onClose, onSwitchMode }) => {
         ) : (
           <div className="d-flex justify-content-end mb-3">
             <Button variant="link" className="auth-link">
-              Quên mật khẩu?
+              Forgot password?
             </Button>
           </div>
         )}
 
         <Button type="submit" variant="primary" size="lg" className="w-100 auth-submit" disabled={!isValid}>
-          {isRegister ? 'Đăng ký tài khoản' : 'Đăng nhập'}
+          {isRegister ? 'Create Account' : 'Log in'}
         </Button>
       </Form>
 
       <div className="auth-footer">
         {isRegister ? (
           <p>
-            Đã có tài khoản?{' '}
+            Already have an account?{' '}
             <button type="button" className="auth-switch" onClick={() => onSwitchMode('login')}>
-              Đăng nhập
+              Log in
             </button>
           </p>
         ) : (
           <p>
-            Chưa có tài khoản?{' '}
+            Don't have an account?{' '}
             <button type="button" className="auth-switch" onClick={() => onSwitchMode('register')}>
-              Tạo tài khoản ngay
+              Create account now
             </button>
           </p>
         )}

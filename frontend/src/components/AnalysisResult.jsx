@@ -1,5 +1,8 @@
 import React from 'react';
 import { Card, Tabs, Tab, Alert, ProgressBar, Table, Badge } from 'react-bootstrap';
+import SecurityVendorOverview from './SecurityVendorOverview';
+import FriendlyAnalysisSummary from './FriendlyAnalysisSummary';
+import AIAnalysis from './AIAnalysis';
 
 const renderThreatScore = (stats) => {
   if (!stats) return null;
@@ -36,7 +39,7 @@ const renderThreatScore = (stats) => {
 const DetectionsTable = ({ results }) => {
   if (!results) return null;
   return (
-    <Table striped bordered hover variant="dark" responsive="sm" className="mt-3">
+    <Table striped bordered hover variant="dark" responsive="sm" className="mt-3 detections-table">
       <thead>
         <tr>
           <th>Engine</th>
@@ -47,13 +50,13 @@ const DetectionsTable = ({ results }) => {
       <tbody>
         {Object.entries(results).map(([engine, result]) => (
           <tr key={engine}>
-            <td>{engine}</td>
+            <td style={{ color: '#e2e8f0', fontWeight: 400 }}>{engine}</td>
             <td>
               <Badge bg={result.category === 'malicious' ? 'danger' : 'secondary'}>
                 {result.category}
               </Badge>
             </td>
-            <td>{result.result || 'N/A'}</td>
+            <td style={{ color: '#e2e8f0', fontWeight: 400 }}>{result.result || 'N/A'}</td>
           </tr>
         ))}
       </tbody>
@@ -79,7 +82,7 @@ const DetailsTab = ({ attributes }) => {
   )
 }
 
-const AnalysisResult = ({ response, error, isLoading }) => {
+const AnalysisResult = ({ response, error, isLoading, activeQuery, backendBaseUrl }) => {
   if (isLoading) {
     return (
       <div className="d-flex justify-content-center my-4">
@@ -109,13 +112,33 @@ const AnalysisResult = ({ response, error, isLoading }) => {
     return <Alert variant="warning">Unable to read data returned from VirusTotal.</Alert>;
   }
 
+  // Lấy indicator value từ activeQuery hoặc từ attributes
+  const indicatorValue = activeQuery?.indicator || attributes.sha256 || attributes.url || attributes.domain || '';
+  const indicatorType = activeQuery?.type || 'file';
+
   return (
     <Card text="light" className="analysis-card glass-card mt-4">
       <Card.Header>
         <h4 className="mb-0">Analysis Report</h4>
       </Card.Header>
       <Card.Body>
+        <FriendlyAnalysisSummary
+          stats={attributes.last_analysis_stats}
+          results={attributes.last_analysis_results}
+        />
+        
+        {/* AI Analysis Component - Right below the Overview section */}
+        {response && attributes && indicatorValue && backendBaseUrl && (
+          <AIAnalysis
+            vtData={response}
+            indicatorType={indicatorType}
+            indicatorValue={indicatorValue}
+            backendBaseUrl={backendBaseUrl}
+          />
+        )}
+        
         {renderThreatScore(attributes.last_analysis_stats)}
+        <SecurityVendorOverview results={attributes.last_analysis_results} />
       </Card.Body>
       <Card.Body>
         <Tabs defaultActiveKey="detections" id="result-tabs" className="mb-3" fill>

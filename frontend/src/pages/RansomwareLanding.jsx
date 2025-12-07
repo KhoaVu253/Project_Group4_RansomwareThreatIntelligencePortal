@@ -354,7 +354,7 @@ function FAQItem({ question, answer, index }) {
   );
 }
 
-export default function RansomwareLanding() {
+export default function RansomwareLanding({ onNavigateCommunity, onNavigateLogin }) {
   const containerRef = useRef(null);
   const [progress, setProgress] = useState(0);
 
@@ -494,35 +494,6 @@ export default function RansomwareLanding() {
     <div className="rl-wrapper" ref={containerRef}>
       <ParticleBackground />
       <ScrollProgress progress={progress} />
-      <nav className="rl-nav" aria-label="Primary">
-        <div className="rl-nav-left">
-          <span className="rl-nav-logo">
-            <ShieldIcon className="rl-nav-logo-icon" />
-            <span>Ransomware Portal</span>
-          </span>
-        </div>
-        <div className="rl-nav-links">
-          <a href="#about" onClick={(event) => handleNavClick(event, '#about')}>
-            About
-          </a>
-          <a href="#features" onClick={(event) => handleNavClick(event, '#features')}>
-            Features
-          </a>
-          <a href="#process" onClick={(event) => handleNavClick(event, '#process')}>
-            Process
-          </a>
-          <a href="#faq" onClick={(event) => handleNavClick(event, '#faq')}>
-            FAQ
-          </a>
-        </div>
-        <div className="rl-nav-actions">
-          <a className="rl-nav-login" href="/login">
-            <span>Login</span>
-            <ArrowIcon className="rl-nav-arrow" />
-          </a>
-        </div>
-      </nav>
-
       <main className="rl-main" tabIndex={-1}>
         <header className="rl-section rl-hero" id="hero">
           <div className="rl-ornament rl-ornament-left" aria-hidden="true" />
@@ -554,9 +525,27 @@ export default function RansomwareLanding() {
                   <button
                     type="button"
                     className="rl-btn rl-btn-secondary"
-                    onClick={(event) => handleNavClick(event, '#about')}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      if (onNavigateCommunity) {
+                        onNavigateCommunity();
+                      } else {
+                        handleNavClick(event, '#faq');
+                      }
+                    }}
                   >
-                    <span>Learn More</span>
+                    <span>Join Community</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="rl-btn rl-btn-cta"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      onNavigateLogin?.();
+                    }}
+                  >
+                    <span>Log in</span>
+                    <ArrowIcon className="rl-btn-icon" />
                   </button>
                 </div>
               </div>
@@ -1778,3 +1767,5 @@ export default function RansomwareLanding() {
     </div>
   );
 }
+
+

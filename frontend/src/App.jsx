@@ -9,6 +9,8 @@ import ScanPage from './pages/ScanPage';
 import HistoryPage from './pages/HistoryPage';
 import ProfilePage from './pages/ProfilePage';
 import RansomwareLanding from './pages/RansomwareLanding';
+import CommunityPage from './pages/Community';
+import CommunityPostDetail from './pages/CommunityPostDetail';
 
 import './App.css';
 
@@ -131,6 +133,7 @@ const AuthenticatedApp = ({
   profile,
   onUpdateProfile,
   onRetry,
+  backendBaseUrl,
 }) => {
   const navigate = useNavigate();
   const consoleSectionRef = useRef(null);
@@ -167,6 +170,10 @@ const AuthenticatedApp = ({
     navigate('/profile');
   };
 
+  const handleNavigateCommunity = () => {
+    navigate('/community');
+  };
+
   const handleReanalyzeFromHistory = (entry) => {
     if (!entry) return;
     onReanalyzeHistoryEntry(entry);
@@ -191,6 +198,7 @@ const AuthenticatedApp = ({
         onLogout={onLogout}
         onNavigateHistory={handleNavigateHistory}
         onNavigateProfile={handleNavigateProfile}
+        onNavigateCommunity={handleNavigateCommunity}
       />
 
       <Routes>
@@ -221,6 +229,7 @@ const AuthenticatedApp = ({
               progressPercent={progressPercent}
               onBack={handleBackToDashboard}
               onRetry={handleRetry}
+              backendBaseUrl={backendBaseUrl}
             />
           }
         />
@@ -242,7 +251,28 @@ const AuthenticatedApp = ({
               profile={profile}
               historyEntries={historyEntries}
               onUpdateProfile={onUpdateProfile}
+              backendBaseUrl={backendBaseUrl}
               onNavigateHistory={handleNavigateHistory}
+            />
+          }
+        />
+        <Route
+          path="/community"
+          element={
+            <CommunityPage
+              backendBaseUrl={backendBaseUrl}
+              currentUser={user}
+              isAuthenticated
+            />
+          }
+        />
+        <Route
+          path="/community/:postId"
+          element={
+            <CommunityPostDetail
+              backendBaseUrl={backendBaseUrl}
+              currentUser={user}
+              isAuthenticated
             />
           }
         />
@@ -273,17 +303,22 @@ function App() {
     const raw = import.meta.env.VITE_BACKEND_URL || '';
     return raw.endsWith('/') ? raw.slice(0, -1) : raw;
   }, []);
+  const navigate = useNavigate();
 
-  const [currentUser, setCurrentUser] = useState(() => {
-    if (typeof window === 'undefined') return null;
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Load user from localStorage on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
     try {
-      const stored = window.localStorage.getItem(AUTH_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : null;
-    } catch (storageError) {
-      console.error('Failed to parse stored user', storageError);
-      return null;
+      const storedUser = window.localStorage.getItem(AUTH_STORAGE_KEY);
+      if (storedUser) {
+        setCurrentUser(JSON.parse(storedUser));
+      }
+    } catch (err) {
+      console.error('Failed to load user from storage', err);
     }
-  });
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -319,42 +354,74 @@ function App() {
     }
     refreshHistoryFromServer(currentUser.email);
 
-    const profileKey = createProfileStorageKey(currentUser);
-    if (!profileKey) {
-      setProfile({
-        displayName: currentUser.fullName || currentUser.email || 'Người dùng',
-        email: currentUser.email || '',
-        organization: '',
-        role: '',
-        bio: '',
-      });
-      return;
-    }
-
-    try {
-      const rawProfile = window.localStorage.getItem(profileKey);
-      if (rawProfile) {
-        setProfile(JSON.parse(rawProfile));
-      } else {
-        setProfile({
-          displayName: currentUser.fullName || currentUser.email || 'Người dùng',
+    // Load profile from API
+    const loadProfileFromAPI = async () => {
+      try {
+        const token = localStorage.getItem('vt-auth-token');
+        if (!token) {
+          // Nếu không có token, set profile mặc định
+          setProfile({
+            displayName: currentUser.fullName || currentUser.email || 'User',
+            email: currentUser.email || '',
+            organization: '',
+            role: currentUser.role || 'analyst',
+            bio: '',
+          });
+          return;
+        }
+        
+        const response = await axios.get(`${backendBaseUrl}/api/user/profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setProfile(response.data || {
+          displayName: currentUser.fullName || currentUser.email || 'User',
           email: currentUser.email || '',
           organization: '',
-          role: '',
+          role: currentUser.role || 'analyst',
           bio: '',
         });
+      } catch (err) {
+        console.error('Failed to load profile from API', err);
+        // Fallback to localStorage hoặc tạo profile mặc định
+        const profileKey = createProfileStorageKey(currentUser);
+        if (profileKey) {
+          try {
+            const rawProfile = window.localStorage.getItem(profileKey);
+            if (rawProfile) {
+              setProfile(JSON.parse(rawProfile));
+            } else {
+              setProfile({
+                displayName: currentUser.fullName || currentUser.email || 'User',
+                email: currentUser.email || '',
+                organization: '',
+                role: currentUser.role || 'analyst',
+                bio: '',
+              });
+            }
+          } catch (storageErr) {
+            console.error('Failed to load profile from storage', storageErr);
+            setProfile({
+              displayName: currentUser.fullName || currentUser.email || 'User',
+              email: currentUser.email || '',
+              organization: '',
+              role: currentUser.role || 'analyst',
+              bio: '',
+            });
+          }
+        } else {
+          setProfile({
+            displayName: currentUser.fullName || currentUser.email || 'User',
+            email: currentUser.email || '',
+            organization: '',
+            role: currentUser.role || 'analyst',
+            bio: '',
+          });
+        }
       }
-    } catch (err) {
-      console.error('Failed to load profile from storage', err);
-      setProfile({
-        displayName: currentUser.fullName || currentUser.email || 'Người dùng',
-        email: currentUser.email || '',
-        organization: '',
-        role: '',
-        bio: '',
-      });
-    }
-  }, [currentUser, refreshHistoryFromServer]);
+    };
+
+    loadProfileFromAPI();
+  }, [currentUser, refreshHistoryFromServer, backendBaseUrl]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -485,7 +552,7 @@ function App() {
       setProgressPercent(options.successProgress ?? 100);
 
       const computedSummary = buildSummary(type, res.data);
-      const summaryToUse = options.summaryOverride || computedSummary || null;
+      const summaryToUse = computedSummary || options.summaryOverride || null;
       if (summaryToUse) {
         setActiveQuery((prev) => ({
           ...prev,
@@ -681,7 +748,7 @@ function App() {
         });
         const newAnalysisId = res.data?.analysis_id;
         if (!newAnalysisId) {
-          throw new Error('VirusTotal không trả về analysis_id');
+          throw new Error('VirusTotal did not return analysis_id');
         }
 
         setAnalysisId(newAnalysisId);
@@ -727,7 +794,7 @@ function App() {
         });
         const newAnalysisId = res.data?.analysis_id;
         if (!newAnalysisId) {
-          throw new Error('VirusTotal không trả về analysis_id cho URL');
+          throw new Error('VirusTotal did not return analysis_id for URL');
         }
 
         setAnalysisId(newAnalysisId);
@@ -763,8 +830,8 @@ function App() {
     setProgressPercent(0);
   }, [clearPolling]);
 
-  const handleAuthSuccess = (user) => {
-    setCurrentUser(user);
+  const handleAuthSuccess = (userData) => {
+    setCurrentUser(userData);
   };
 
   const handleLogout = () => {
@@ -778,7 +845,7 @@ function App() {
     // Clear all scan data and polling
     handleClear();
     
-    // Remove user data from localStorage first (before clearing state)
+    // Remove user data from localStorage
     if (currentUser) {
       const historyKey = createHistoryStorageKey(currentUser);
       const profileKey = createProfileStorageKey(currentUser);
@@ -792,15 +859,15 @@ function App() {
     }
     
     // Remove current user from localStorage
-    localStorage.removeItem('currentUser');
+    localStorage.removeItem(AUTH_STORAGE_KEY);
     
     // Clear all state
     setCurrentUser(null);
     setProfile(null);
     setHistoryEntries([]);
     
-    // Show success message
-    console.log('✓ Logged out successfully');
+    // Navigate to login
+    navigate('/login');
   };
 
   const handleClearHistory = useCallback(async () => {
@@ -823,11 +890,23 @@ function App() {
   const handleUpdateProfile = useCallback(
     (updates) => {
       if (!currentUser) return;
-      setProfile((prev) => ({
-        ...prev,
-        ...updates,
-        email: prev?.email || currentUser.email || '',
-      }));
+      setProfile((prev) => {
+        const newProfile = {
+          ...prev,
+          ...updates,
+          email: prev?.email || currentUser.email || '',
+        };
+        // Lưu vào localStorage làm backup
+        const profileKey = createProfileStorageKey(currentUser);
+        if (profileKey) {
+          try {
+            window.localStorage.setItem(profileKey, JSON.stringify(newProfile));
+          } catch (err) {
+            console.error('Failed to save profile to storage', err);
+          }
+        }
+        return newProfile;
+      });
     },
     [currentUser]
   );
@@ -868,6 +947,8 @@ function App() {
   const isAuthenticated = Boolean(currentUser);
 
   if (!isAuthenticated) {
+    const handleNavigateCommunity = () => navigate('/community');
+    const handleNavigateLogin = () => navigate('/login');
     return (
       <div className="App min-vh-100 bg-dark text-light position-relative overflow-hidden">
         <div className="app-background">
@@ -878,7 +959,31 @@ function App() {
         <Routes>
           <Route
             path="/"
-            element={<RansomwareLanding />}
+            element={
+              <RansomwareLanding
+                onNavigateCommunity={handleNavigateCommunity}
+                onNavigateLogin={handleNavigateLogin}
+              />
+            }
+          />
+          <Route
+            path="/community"
+            element={
+              <CommunityPage
+                backendBaseUrl={backendBaseUrl}
+                currentUser={currentUser}
+              />
+            }
+          />
+          <Route
+            path="/community/:postId"
+            element={
+              <CommunityPostDetail
+                backendBaseUrl={backendBaseUrl}
+                currentUser={currentUser}
+                isAuthenticated={false}
+              />
+            }
           />
           <Route path="/login" element={<AuthPage onSuccess={handleAuthSuccess} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -909,6 +1014,7 @@ function App() {
       profile={profile}
       onUpdateProfile={handleUpdateProfile}
       onRetry={handleRetry}
+      backendBaseUrl={backendBaseUrl}
     />
   );
 }

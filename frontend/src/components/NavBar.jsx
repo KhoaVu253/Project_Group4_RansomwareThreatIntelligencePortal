@@ -1,9 +1,18 @@
 import React from "react";
-import { Navbar, Container, Dropdown, Nav } from "react-bootstrap";
+import { Navbar, Container, Dropdown, Nav, Button } from "react-bootstrap";
 import { ShieldShaded, PersonCircle } from "react-bootstrap-icons";
 
-const NavBar = ({ user, profile, onLogout, onNavigateProfile, onNavigateHistory }) => {
-  const displayName = profile?.displayName || user?.fullName || user?.email || "Người dùng";
+const NavBar = ({
+  user,
+  profile,
+  onLogout,
+  onNavigateProfile,
+  onNavigateHistory,
+  onNavigateCommunity,
+  onNavigateLogin,
+}) => {
+  const displayName = profile?.displayName || user?.fullName || user?.email || "User";
+  const isAuthenticated = Boolean(user);
 
   return (
     <Navbar bg="dark" variant="dark" expand="lg" className="mb-4 shadow-sm">
@@ -15,14 +24,23 @@ const NavBar = ({ user, profile, onLogout, onNavigateProfile, onNavigateHistory 
 
         <Navbar.Toggle aria-controls="vt-main-nav" />
         <Navbar.Collapse id="vt-main-nav" className="justify-content-end">
-          {user && (
-            <Nav className="me-3">
-              <Nav.Link onClick={() => onNavigateHistory?.()}>Lịch sử quét</Nav.Link>
-              <Nav.Link onClick={() => onNavigateProfile?.()}>Hồ sơ</Nav.Link>
-            </Nav>
-          )}
+          <Nav className="me-auto align-items-lg-center">
+            <Nav.Link className="fw-semibold" onClick={() => onNavigateCommunity?.()}>
+              Community
+            </Nav.Link>
+            {isAuthenticated && (
+              <>
+                <Nav.Link className="fw-semibold" onClick={() => onNavigateHistory?.()}>
+                  Scan History
+                </Nav.Link>
+                <Nav.Link className="fw-semibold" onClick={() => onNavigateProfile?.()}>
+                  Profile
+                </Nav.Link>
+              </>
+            )}
+          </Nav>
 
-          {user && (
+          {isAuthenticated ? (
             <Dropdown align="end">
               <Dropdown.Toggle variant="outline-light" className="d-flex align-items-center gap-2">
                 <PersonCircle size={22} />
@@ -41,6 +59,10 @@ const NavBar = ({ user, profile, onLogout, onNavigateProfile, onNavigateHistory 
                 </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
+          ) : (
+            <Button variant="outline-light" className="fw-semibold" onClick={() => onNavigateLogin?.()}>
+              Log in
+            </Button>
           )}
         </Navbar.Collapse>
       </Container>
