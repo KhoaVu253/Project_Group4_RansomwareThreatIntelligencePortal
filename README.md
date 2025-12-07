@@ -260,12 +260,4 @@ Hệ thống sử dụng các bảng chính:
 - **Threat Intelligence Teams**: Chia sẻ thông tin về threats
 - **Ransomware Researchers**: Workflow phân tích ransomware chuyên nghiệp
 
-## 📄 License
-
-[Specify license]
-
----
-
-**Phiên bản**: 1.0.0  
-**Cập nhật**: 2025-11-30
 
